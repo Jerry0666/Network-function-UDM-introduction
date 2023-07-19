@@ -134,10 +134,9 @@ func communicateWithUDM(ue *context.AmfUe, accessType models.AccessType) error {
 ```
 *amf/internal/gmm/handler.go*
 
-Next, let's take a look at this function. It is called HandleInitialRegistration, which handles UE's initial registration. UeCmRegistration will use the Nudm_UECM (UECM) service to store related UE Context Management information in UDM. In lines 40, 47, and 54, AMF uses the Nudm_SubscriberDataManagement (SDM) Service to get some subscribe data.
+Next, let's take a look at this function. It is called in HandleInitialRegistration, which handles UE's initial registration. UeCmRegistration will use the Nudm_UECM (UECM) service to store related UE Context Management information in UDM. In lines 40, 47, and 54, AMF uses the Nudm_SubscriberDataManagement (SDM) Service to get some subscribe data.
 
 ### Nudm_UEContextManagement Service 
-5.2.3.2.1 23502
 In the UeCmRegistration function, AMF registers as UE's serving NF on UDM and stores related UE Context Management information in UDM. Looking at the packet, you can see that the request body contains amfInstanceId and guami, representing the amf identity, and ratType, representing the radio access technology type used by UE.
 
  ![upload_c3e5e7c63f1bb7a934877e7fa29b82ec](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/c24e6f2e-4193-4830-aa4f-e6edb97c1490)
@@ -203,7 +202,7 @@ func RegistrationAmf3gppAccessProcedure(registerRequest models.Amf3GppAccessRegi
 ```
 *udm/internal/sbi/producer/ue_context_management.go*
 
-In the RegistrationAmf3gppAccessProcedure function, Udm first checks whether the context has been established for that UE; if UDM has such a context, it initiates a Nudm_UECM_DeregistrationNotification to the old AMF later. UDM used the received information to create context and stored it in UDR.
+In the RegistrationAmf3gppAccessProcedure function, UDM first checks whether the context has been established for that UE; if UDM has such a context, it initiates a Nudm_UECM_DeregistrationNotification to the old AMF later. UDM used the received information to create context and stored it in UDR.
 
 
 ### Nudm_SubscriberDataManagement (SDM) Service
