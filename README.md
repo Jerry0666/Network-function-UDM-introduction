@@ -1,21 +1,21 @@
 # Network function UDM introduction
 ### Overview
-In this article, I will introduce UDM and through introduce its three services that will be used in the general UE registration procedure (Nudm_UECM service, Nudm_SubscriberDataManagement Service, and Nudm_UEAuthentication Service.) to let everyone understand UDM more clearly.
+In this article, I will introduce UDM and its three services that will be used in the general UE registration procedure (Nudm_UECM service, Nudm_SubscriberDataManagement Service, and Nudm_UEAuthentication service) to let everyone understand UDM more clearly.
 
 ### UDM
-Unified Data Management, responsible for managing information related to UE. When other NFs need to use the UE subscription information, they will obtain that from UDM through the sbi of UDM.
+Unified Data Management is responsible for managing information related to UE. When other NFs need to use the UE subscription information, they will obtain it from UDM through the SBI of UDM.
 
 ### Nudm_UEAuthentication Service
-This service is used by ASUF to retrieve authentication related information, and after authentication, confirm the result.
+This service is used by ASUF to retrieve authentication-related information and, after authentication, confirm the result.
 
 ![upload_dde9cead3e40f645128a006d5bc56681](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/94313ad4-c325-4010-8ee9-4105748f4c3c)
 
-In Authentication, AUSF use GET operation to retrieves authentication information for the UE. The request contains the UE’s identity (supi or suci) and the serving network name. The serving network name is used in the derivation of the anchor key, used by subsenquent authentication. UE’s identity will contained in URI, and the serving network name is contained in request body.
+In Authentication, AUSF uses the GET operation to retrieve authentication information for the UE. The request contains the UE’s identity (supi or suci) and the serving network name. The serving network name is used in the derivation of the anchor key, which is used by subsensual authentication. UE’s identity will be contained in the URI, and the serving network name will be contained in the request body.
 
-Upon reception of the Nudm_UEAuthentication_Get Request, the UDM shall de-conceal SUCI to gain SUPI if SUCI is received. At this time, UDM will query the AuthenticationSubscription data from UDR. Then, UDM shall select the authentication method base on SUPI, and if required(e.g. 5G-AKA), UDM will calculate the authentication vector, and pass it to AUSF.
+Upon reception of the Nudm_UEAuthentication_Get Request, the UDM shall de-conceal SUCI to gain SUPI if SUCI is received. At this time, UDM will query the authentication subscription data from UDR. Then, UDM shall select the authentication method based on SUPI, and if required (e.g., 5G-AKA), UDM will calculate the authentication vector and pass it to AUSF.
 
 * SUPI: A globally unique 5G Subscription Permanent Identifier, used to identify UE.
-* SUCI: Subscription concealed identifier, obtained by encrypting supi through Home Network Public Key, so that supi will not be obtained by a third party on the network.
+* SUCI: Subscription concealed identifier, obtained by encrypting supi through the Home Network Public Key so that supi will not be obtained by a third party on the network.
 
 ```golang=
 logger.UeauLog.Traceln("In GenerateAuthDataProcedure")
@@ -43,19 +43,19 @@ if err != nil {
 authSubs, res, err := client.AuthenticationDataDocumentApi.QueryAuthSubsData(context.Background(), supi, nil)
 ```
 (in udm/internal/sbi/producer/generate_auth_data.go GenerateAuthDataProcedure function)
-From the code we can see UDM first de-conceal SUCI(line 5), then use QueryAuthSubsData to get authSub form UDR. After that, UDM use these information to create the authentication vector.
+From the code, we can see UDM first de-conceal SUCI (line 5), then use QueryAuthSubsData to get authSub from UDR. After that, UDM uses this information to create the authentication vector.
 
-Then we record the packet sent in the registration process, and find the packet according to the uri specified by the specification, we can find the packet corresponding to this service.
+Then we record the packet sent in the registration process and find the packet according to the URI specified by the specification. We can find the packet corresponding to this service.
 
 ![upload_3b177b07a98719c89de8d2cce9594c36](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/c8519f34-e29b-42df-9c59-215c01ac91b7)
 
-Open the response packet, we can see the response body match the AuthenticationInfoResult data type.
+Open the response packet, and we can see the response body matches the AuthenticationInfoResult data type.
 
 ![upload_dde9cead3e40f645128a006d5bc56681](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/0e34a230-6f2d-42a1-88ff-504061725803)
 
 ![upload_f24e1640d05c1614d277517d35b6520f](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/93a1b4db-77ad-42a7-91f9-8fdfcf99a9b6)
 
-After AUSF authenticate the UE, it will confirm the result with UDM. These information will be used in linking authentication confirmation to Nudm_UECM_Registration procedure from AMF.
+After AUSF authenticates the UE, it will confirm the result with UDM. These details will be used in linking authentication confirmation to the Nudm_UECM_Registration procedure from AMF.
 
 ```golang=
 func communicateWithUDM(ue *context.AmfUe, accessType models.AccessType) error {
@@ -130,11 +130,11 @@ func communicateWithUDM(ue *context.AmfUe, accessType models.AccessType) error {
 
 ```
 (amf/internal/gmm/handler.go)
-Next, let's take a look at this function. It is called by HandleInitialRegistration, which handle UE's initial registration. UeCmRegistration will use the Nudm_UECM (UECM) service, store related UE Context Management information in UDM. In line 40, 47, 54, AMF use Nudm_SubscriberDataManagement (SDM) Service to get some subscribe data. 
+Next, let's take a look at this function. It is called HandleInitialRegistration, which handles UE's initial registration. UeCmRegistration will use the Nudm_UECM (UECM) service to store related UE Context Management information in UDM. In lines 40, 47, and 54, AMF uses the Nudm_SubscriberDataManagement (SDM) Service to get some subscribe data.
 
 ### Nudm_UEContextManagement Service 
 5.2.3.2.1 23502
-In UeCmRegistration function, AMF register as UE's serving NF on UDM and store related UE Context Management information in UDM. Looking at the packet, you can see that the request body contains amfInstanceId and guami representing the amf identity, and ratType represents the radio access technology type used by UE. 
+In the UeCmRegistration function, AMF registers as UE's serving NF on UDM and stores related UE Context Management information in UDM. Looking at the packet, you can see that the request body contains amfInstanceId and guami, representing the amf identity, and ratType, representing the radio access technology type used by UE.
 
  ![upload_c3e5e7c63f1bb7a934877e7fa29b82ec](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/c24e6f2e-4193-4830-aa4f-e6edb97c1490)
 
@@ -197,19 +197,19 @@ func RegistrationAmf3gppAccessProcedure(registerRequest models.Amf3GppAccessRegi
 }
 
 ```
-In RegistrationAmf3gppAccessProcedure function, Udm first checks whether the context has been established for that UE, if UDM havd such context, it initiate a Nudm_UECM_DeregistrationNotification to the old AMF later. UDM used received information to create context and stored it to UDR.
+In the RegistrationAmf3gppAccessProcedure function, Udm first checks whether the context has been established for that UE; if UDM has such a context, it initiates a Nudm_UECM_DeregistrationNotification to the old AMF later. UDM used the received information to create context and stored it in UDR.
 
 
 ### Nudm_SubscriberDataManagement (SDM) Service
-The SDM service is used to to retrieve the UE's individual subscription data relevant to the consumer NF from the UDM. In SDMGetAmData funtion, AMF got subscription data used in registration and mobility management. In the response packet, AMF got gpsis, subscribedUeAmbr, and nssai.
+The SDM service is used to retrieve the UE's individual subscription data relevant to the consumer's NF from the UDM. In the SDMGetAmData function, AMF gets subscription data used in registration and mobility management. In the response packet, AMF got gpsis, subscribedUeAmbr, and nssai.
 
 ![upload_6793e16d2435baf3f235d61178245873](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/6b1c0bcb-2b79-4523-ad8b-1cdaad758b52)
 
-The GPSI is used to addressing a 3GPP subscription in data networks outside the realms of a 3GPP system. It contains either an External Id or an [MSISDN](https://en.wikipedia.org/wiki/MSISDN). The subscribedUeAmbr is The Maximum Aggregated uplink and downlink MBRs(Max Bit Rate) to be shared across all Non-GBR(Non Guaranteed Bit Rate) QoS Flows according to the subscription of the user. (ts23502 Table 5.2.3.3.1-1). 
+The GPSI is used to address a 3GPP subscription in data networks outside the realms of a 3GPP system. It contains either an External ID or an [MSISDN](https://en.wikipedia.org/wiki/MSISDN).The subscribedUeAmbr is The Maximum Aggregated uplink and downlink MBRs (max. bit rate) to be shared across all Non-GBR (non-guaranteed Bit Rate) QoS Flows according to the subscription of the user. (ts23502 Table 5.2.3.3.1-1). 
 
 ![upload_e45012750cc609c51d59437c24f8fc4f](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/311a2b76-efe3-4afc-84e3-fcc95f65047e)
 
-In SDMGetSmfSelectData funtion, AMF got subscribed S-NSSAIs(Single Network Slice Selection Assistance Information) and Data Network Names for these S-NSSAIs. AMF will use these information to select an SMF that manages the PDU Session. 
+In the SDMGetSmfSelectData function, AMF gets subscribed S-NSSAIs (Single Network Slice Selection Assistance Information) and Data Network Names for these S-NSSAIs. AMF will use this information to select an SMF that manages the PDU Session.
 
 ```golang=
 func HandleInitialRegistration(ue *context.AmfUe, anType models.AccessType) error {
@@ -229,7 +229,7 @@ func HandleInitialRegistration(ue *context.AmfUe, anType models.AccessType) erro
 		return err
 	}
 ```
-In the initial of HandleInitialRegistration, AMF sends a request to the UDM to receive the UE's NSSAI. After received subscribed NSSAI, AMF will used it compared with requestedNssai of UE. If there is a Snssai have not been subscribed before, AMF will request NSSF for Allowed NSSAI.
+In the initialization of HandleInitialRegistration, AMF sends a request to the UDM to receive the UE's NSSAI. After receiving subscribed NSSAI, AMF will compare it to UE's requested NSSAI. If there is a S-NSSAI that has not been subscribed before, AMF will request NSSF for Allowed NSSAI.
 
 ```golang=
 func handleRequestedNssai(ue *context.AmfUe, anType models.AccessType) error {
