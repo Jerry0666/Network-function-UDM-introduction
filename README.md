@@ -9,6 +9,7 @@ Unified Data Management is responsible for managing information related to UE. W
 This service is used by ASUF to retrieve authentication-related information and, after authentication, confirm the result.
 
 ![upload_dde9cead3e40f645128a006d5bc56681](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/94313ad4-c325-4010-8ee9-4105748f4c3c)
+*ts33.501*
 
 In Authentication, AUSF uses the GET operation to retrieve authentication information for the UE. The request contains the UE’s identity (supi or suci) and the serving network name. The serving network name is used in the derivation of the anchor key, which is used by subsensual authentication. UE’s identity will be contained in the URI, and the serving network name will be contained in the request body.
 
@@ -42,7 +43,8 @@ if err != nil {
 }
 authSubs, res, err := client.AuthenticationDataDocumentApi.QueryAuthSubsData(context.Background(), supi, nil)
 ```
-(in udm/internal/sbi/producer/generate_auth_data.go GenerateAuthDataProcedure function)
+*udm/internal/sbi/producer/generate_auth_data.go GenerateAuthDataProcedure function*
+
 From the code, we can see UDM first de-conceal SUCI (line 5), then use QueryAuthSubsData to get authSub from UDR. After that, UDM uses this information to create the authentication vector.
 
 Then we record the packet sent in the registration process and find the packet according to the URI specified by the specification. We can find the packet corresponding to this service.
@@ -51,9 +53,10 @@ Then we record the packet sent in the registration process and find the packet a
 
 Open the response packet, and we can see the response body matches the AuthenticationInfoResult data type.
 
-![upload_dde9cead3e40f645128a006d5bc56681](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/0e34a230-6f2d-42a1-88ff-504061725803)
+![upload_3acf4b96a27e13f8b35712d5efc402da](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/36534f56-d487-4277-9395-88a1b09f4ef5)
 
 ![upload_f24e1640d05c1614d277517d35b6520f](https://github.com/Jerry0666/Network-function-UDM-introduction/assets/131638457/93a1b4db-77ad-42a7-91f9-8fdfcf99a9b6)
+*ts29.503*
 
 After AUSF authenticates the UE, it will confirm the result with UDM. These details will be used in linking authentication confirmation to the Nudm_UECM_Registration procedure from AMF.
 
@@ -129,7 +132,8 @@ func communicateWithUDM(ue *context.AmfUe, accessType models.AccessType) error {
 }
 
 ```
-(amf/internal/gmm/handler.go)
+*amf/internal/gmm/handler.go*
+
 Next, let's take a look at this function. It is called HandleInitialRegistration, which handles UE's initial registration. UeCmRegistration will use the Nudm_UECM (UECM) service to store related UE Context Management information in UDM. In lines 40, 47, and 54, AMF uses the Nudm_SubscriberDataManagement (SDM) Service to get some subscribe data.
 
 ### Nudm_UEContextManagement Service 
@@ -197,6 +201,8 @@ func RegistrationAmf3gppAccessProcedure(registerRequest models.Amf3GppAccessRegi
 }
 
 ```
+*udm/internal/sbi/producer/ue_context_management.go*
+
 In the RegistrationAmf3gppAccessProcedure function, Udm first checks whether the context has been established for that UE; if UDM has such a context, it initiates a Nudm_UECM_DeregistrationNotification to the old AMF later. UDM used the received information to create context and stored it in UDR.
 
 
@@ -229,6 +235,8 @@ func HandleInitialRegistration(ue *context.AmfUe, anType models.AccessType) erro
 		return err
 	}
 ```
+*amf/internal/gmm/handler.go*
+
 In the initialization of HandleInitialRegistration, AMF sends a request to the UDM to receive the UE's NSSAI. After receiving subscribed NSSAI, AMF will compare it to UE's requested NSSAI. If there is a S-NSSAI that has not been subscribed before, AMF will request NSSF for Allowed NSSAI.
 
 ```golang=
@@ -287,6 +295,7 @@ func handleRequestedNssai(ue *context.AmfUe, anType models.AccessType) error {
 				return fmt.Errorf("Handle Requested Nssai of UE failed")
 			}
 ```
+*amf/internal/gmm/handler.go*
 
 ### Reference
 * 3GPP TS29.503 v15.2
